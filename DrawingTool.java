@@ -1,10 +1,15 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import javax.imageio.ImageIO;
 import java.util.ArrayList;
 
 /**
  * A simple drawing tool application using Java Swing
+ * With save functionality
  */
 public class DrawingTool extends JFrame {
     private ArrayList<Point> points = new ArrayList<>();
@@ -12,7 +17,7 @@ public class DrawingTool extends JFrame {
     private int brushSize = 5;
     
     public DrawingTool() {
-        setTitle("Simple Drawing Tool");
+        setTitle("Drawing Tool with Save");
         setSize(800, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
@@ -87,6 +92,10 @@ public class DrawingTool extends JFrame {
             drawingPanel.repaint();
         });
         
+        // Save button
+        JButton saveBtn = new JButton("Save Drawing");
+        saveBtn.addActionListener(e -> saveDrawing(drawingPanel));
+        
         // Brush size control
         JLabel sizeLabel = new JLabel("Brush Size: " + brushSize);
         JSlider sizeSlider = new JSlider(1, 20, brushSize);
@@ -101,6 +110,7 @@ public class DrawingTool extends JFrame {
         controlPanel.add(blueBtn);
         controlPanel.add(greenBtn);
         controlPanel.add(clearBtn);
+        controlPanel.add(saveBtn);
         controlPanel.add(sizeLabel);
         controlPanel.add(sizeSlider);
         
@@ -108,6 +118,53 @@ public class DrawingTool extends JFrame {
         setLayout(new BorderLayout());
         add(drawingPanel, BorderLayout.CENTER);
         add(controlPanel, BorderLayout.SOUTH);
+    }
+    
+    /**
+     * Saves the current drawing as a PNG image file
+     * 
+     * @param panel The panel containing the drawing to save
+     */
+    private void saveDrawing(JPanel panel) {
+        BufferedImage image = new BufferedImage(panel.getWidth(), panel.getHeight(), BufferedImage.TYPE_INT_RGB);
+        Graphics2D g2d = image.createGraphics();
+        
+        // Fill with white background
+        g2d.setColor(Color.WHITE);
+        g2d.fillRect(0, 0, panel.getWidth(), panel.getHeight());
+        
+        // Paint the panel content to the image
+        panel.paint(g2d);
+        g2d.dispose();
+        
+        // Create file chooser dialog
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Save Drawing");
+        
+        // Set default filename and filter
+        fileChooser.setSelectedFile(new File("drawing.png"));
+        
+        if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+            File file = fileChooser.getSelectedFile();
+            
+            // Add .png extension if not present
+            if (!file.getName().toLowerCase().endsWith(".png")) {
+                file = new File(file.getAbsolutePath() + ".png");
+            }
+            
+            try {
+                ImageIO.write(image, "png", file);
+                JOptionPane.showMessageDialog(this, 
+                    "Drawing saved successfully to: " + file.getAbsolutePath(),
+                    "Save Complete", 
+                    JOptionPane.INFORMATION_MESSAGE);
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(this,
+                    "Error saving image: " + ex.getMessage(),
+                    "Save Error",
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
     
     // Custom Point class that includes color and connection information
